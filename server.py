@@ -1,5 +1,6 @@
 from flask import Flask, json
 from flask_cors import CORS
+from flask import request
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import atexit
@@ -17,7 +18,11 @@ def startServer():
 
 @api.route('/charge_points', methods=['GET'])
 def getChargePoints():
-    return json.dumps(database.getChargePoints())
+    startDate = request.args.get('startDate')
+    endDate = request.args.get('endDate')
+    startTime = request.args.get('startTime')
+    endTime = request.args.get('endTime')
+    return json.dumps(database.getChargePoints(startDate, endDate, startTime, endTime))
 
 
 @api.route('/date_interval', methods=['GET'])

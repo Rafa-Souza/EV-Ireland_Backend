@@ -140,31 +140,41 @@ def truncateBulkInsertTable():
     connectionPool.putconn(conn)
 
 
-def getChargePoints():
+def getChargePoints(start_date, end_date, stat_time, end_time):
     conn = connectionPool.getconn()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('''
-    SELECT
-        COUNT(rs.status) filter (where rs.status = 'Occ') as total_occ,
-        COUNT(rs.status) filter (where rs.status = 'Part') as total_part,
-        COUNT(rs.status) filter (where rs.status = 'OOS') as total_oos,
-        COUNT(rs.status) filter (where rs.status = 'OOC') as total_ooc,
-        COUNT(rs.status) as total_status,
-        rd.date::date,
-        cp.id as charge_point_id,
-        cp.address,
-        cp.type as charge_point_type,
-        cp.latitude,
-        cp.longitude 
-    FROM register_date rd 
-        inner join register_status rs on rs.fk_register_date = rd.id
-        inner join charge_point cp on cp.id = rs.fk_charge_point
-    where rd.date::date = '2016-11-02'
-    group by cp.id, rd.date::date''')
+    selectQueryStart = '''
+    SELECT cp.*, rd.* from charge_point cp cross join lateral
+        (select
+            COUNT(rs.status) filter (where rs.status = 'Occ') as total_occ,
+            COUNT(rs.status) filter (where rs.status = 'Part') as total_part,
+            COUNT(rs.status) filter (where rs.status = 'OOS') as total_oos,
+            COUNT(rs.status) filter (where rs.status = 'OOC') as total_ooc,
+            rs.fk_charge_point as cpid
+        FROM register_date rd 
+            inner join register_status rs on rs.fk_register_date = rd.id 
+    '''
+    selectQueryEnd = ''' group by rs.fk_charge_point) rd
+    where cp.id = rd.cpid '''
+    whereQuery = mountWhereQuery(start_date, end_date, stat_time, end_time)
+    cursor.execute(selectQueryStart+whereQuery+selectQueryEnd)
     conn.commit()
     results = cursor.fetchall()
     connectionPool.putconn(conn)
     return results
+
+
+def mountWhereQuery(start_date, end_date, start_time, end_time):
+    query = ' where 0 = 0 '
+    if start_date:
+        query += " AND rd.date::date >= '%s'" % start_date
+    if end_date:
+        query += " AND rd.date::date <= '%s'" % end_date
+    if start_time:
+        query += " AND rd.date::time >= time '%s'" % start_time
+    if end_time:
+        query += " AND rd.date::time <= time '%s'" % end_time
+    return query
 
 
 def getMaxMinDate():
