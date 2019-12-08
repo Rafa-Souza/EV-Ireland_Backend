@@ -5,24 +5,25 @@ from psycopg2.extras import RealDictCursor
 connectionPool = None
 
 
-def startDb():
+def startDb(user, pwd):
     print('Starting Database...')
-    createDB()
-    createConnectionPool()
+    createDB(user, pwd)
+    createConnectionPool(user, pwd)
     createTables()
     print('Database Configured Successfully!')
 
 
-def createConnectionPool():
+def createConnectionPool(user="postgres", pwd="admin"):
     global connectionPool
-    connectionPool = psycopg2.pool.SimpleConnectionPool(1, 20, user="postgres", password="admin",
-                                                        host="127.0.0.1", port="5432", database="ev_db")
+    connectionPool = psycopg2.pool.SimpleConnectionPool(1, 20, user=user, password=pwd,
+                                                        host="127.0.0.1", port="5432",
+                                                        database="ev_db")
 
 
-def createDB():
+def createDB(user="postgres", pwd="admin"):
     conn = psycopg2.connect(
-        user="postgres",
-        password="admin",
+        user=user,
+        password=pwd,
         host="127.0.0.1",
         port="5432",
         database=""

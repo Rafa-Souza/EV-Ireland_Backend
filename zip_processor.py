@@ -10,7 +10,7 @@ def processZip(file):
                "longitude", "latitude"]
     with ZipFile(BytesIO(file)) as my_zip_file:
         for contained_file in my_zip_file.namelist():
-            df = pd.read_csv(my_zip_file.open(contained_file), sep="\t", header=None, encoding='ANSI', names=columns,
+            df = pd.read_csv(my_zip_file.open(contained_file), sep="\t", header=None, encoding='cp1252', names=columns,
                              dtype={'date': 'str', 'time': 'str'})
             normalizeData(df)
             storeData(df)
